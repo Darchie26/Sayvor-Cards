@@ -1,55 +1,44 @@
-import { Metadata } from 'next'
-import { supabase } from '@/lib/supabase'
-import CardView from './CardView'
+// app/card/[token]/page.tsx
+import { createClient } from '@supabase/supabase-js'
+import CardViewer from './CardView'
 
-type Props = { params: { token: string } }
+const supabase = createClient(
+  process.env.NEXT_PUBLIC_SUPABASE_URL!,
+  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+)
 
-export async function generateMetadata({ params }: Props): Promise<Metadata> {
-  const { data: card } = await supabase
-    .from('sent_cards')
-    .select('image_url, recipient_name, message')
-    .eq('share_token', params.token)
-    .single()
-
-  const title = card?.recipient_name
-    ? `A card for ${card.recipient_name} 💌`
-    : 'Someone sent you a card 💌'
-
-  return {
-    title,
-    description: card?.message ?? 'Open to see your beautiful AI card made with Sayvor',
-    openGraph: {
-      title,
-      description: card?.message ?? 'Open to see your card',
-      images: card?.image_url
-        ? [{ url: card.image_url, width: 800, height: 1067 }]
-        : [],
-    },
-    twitter: {
-      card: 'summary_large_image',
-      title,
-      images: card?.image_url ? [card.image_url] : [],
-    },
-  }
-}
-
-export default async function CardPage({ params }: Props) {
-  const { data: card } = await supabase
+export default async function CardPage({
+  params,
+}: {
+  params: { token: string }
+}) {
+  const { data: card, error } = await supabase
     .from('sent_cards')
     .select('*')
     .eq('share_token', params.token)
     .single()
 
-  // Track view
-  if (card) {
-    await supabase
-      .from('sent_cards')
-      .update({
-        view_count: (card.view_count ?? 0) + 1,
-        viewed_at: new Date().toISOString(),
-      })
-      .eq('share_token', params.token)
+  if (error || !card) {
+    return (
+      <div style={{
+        minHeight: '100vh',
+        display: 'flex',
+        flexDirection: 'column',
+        alignItems: 'center',
+        justifyContent: 'center',
+        backgroundColor: '#f8f8f8',
+        fontFamily: 'sans-serif',
+      }}>
+        <div style={{ fontSize: 48, marginBottom: 16 }}>💌</div>
+        <h1 style={{ fontSize: 24, fontWeight: 800, color: '#1a1a1a', marginBottom: 8 }}>
+          Card not found
+        </h1>
+        <p style={{ color: '#aaa', fontSize: 15 }}>
+          This card may have expired or the link is invalid.
+        </p>
+      </div>
+    )
   }
 
-  return <CardView card={card} />
+  return <CardViewer card={card} />
 }
