@@ -2,9 +2,10 @@
 import { createClient } from '@supabase/supabase-js'
 import CardViewer from './CardView'
 
+// Service role bypasses RLS — card is always readable
 const supabase = createClient(
   process.env.NEXT_PUBLIC_SUPABASE_URL!,
-  process.env.NEXT_PUBLIC_SUPABASE_ANON_KEY!
+  process.env.SUPABASE_SERVICE_ROLE_KEY!
 )
 
 export default async function CardPage({
@@ -12,11 +13,16 @@ export default async function CardPage({
 }: {
   params: { token: string }
 }) {
+  console.log('Looking up card with token:', params.token)
+
   const { data: card, error } = await supabase
     .from('sent_cards')
     .select('*')
     .eq('share_token', params.token)
     .single()
+
+  console.log('Card result:', JSON.stringify(card))
+  console.log('Card error:', JSON.stringify(error))
 
   if (error || !card) {
     return (
@@ -28,14 +34,21 @@ export default async function CardPage({
         justifyContent: 'center',
         backgroundColor: '#f8f8f8',
         fontFamily: 'sans-serif',
+        gap: 12,
       }}>
-        <div style={{ fontSize: 48, marginBottom: 16 }}>💌</div>
-        <h1 style={{ fontSize: 24, fontWeight: 800, color: '#1a1a1a', marginBottom: 8 }}>
+        <div style={{ fontSize: 56 }}>💌</div>
+        <h1 style={{ fontSize: 22, fontWeight: 800, color: '#1a1a1a', margin: 0 }}>
           Card not found
         </h1>
-        <p style={{ color: '#aaa', fontSize: 15 }}>
-          This card may have expired or the link is invalid.
+        <p style={{ color: '#aaa', fontSize: 14, margin: 0 }}>
+          This link may be invalid or the card was removed.
         </p>
+        {/* Show error in dev so we can debug */}
+        {process.env.NODE_ENV === 'development' && error && (
+          <pre style={{ fontSize: 11, color: '#e05a3a', maxWidth: 400, wordBreak: 'break-all' }}>
+            {JSON.stringify(error, null, 2)}
+          </pre>
+        )}
       </div>
     )
   }
