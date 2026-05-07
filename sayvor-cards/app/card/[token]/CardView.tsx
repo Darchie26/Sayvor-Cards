@@ -222,7 +222,7 @@ export default function CardViewer({ card }: { card: Card }) {
             textDecoration: 'none',
           }}
         >
-          Download Sayvor! 💌
+          Download Sayvor! →
         </a>
       </div>
 
