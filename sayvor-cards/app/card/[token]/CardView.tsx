@@ -214,7 +214,7 @@ export default function CardViewer({ card }: { card: Card }) {
           Want to create your own AI cards?
         </p>
         <a
-          href="https://apps.apple.com"
+          href="https://apps.apple.com/us/app/sayvor/id6761675195"
           style={{
             fontSize: 13,
             fontWeight: 700,
